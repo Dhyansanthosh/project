@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Music Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --spotify-green: #1DB954;
+            --spotify-black: #191414;
+            --spotify-dark-gray: #282828;
+            --spotify-light-gray: #B3B3B3;
+            --spotify-white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--spotify-black);
+            color: var(--spotify-white);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1DB954 0%, #191414 100%);
+        }
+
+        .register-container {
+            background: rgba(40, 40, 40, 0.9);
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo i {
+            font-size: 48px;
+            color: var(--spotify-green);
+            margin-bottom: 16px;
+        }
+
+        .logo h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--spotify-white);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--spotify-light-gray);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: var(--spotify-white);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--spotify-green);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--spotify-green);
+            color: var(--spotify-black);
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .register-btn:hover {
+            transform: scale(1.02);
+            background: #1ed760;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--spotify-light-gray);
+        }
+
+        .login-link a {
+            color: var(--spotify-green);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #1ed760;
+        }
+
+        .password-requirements {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--spotify-light-gray);
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            padding-left: 16px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        .password-requirements li::before {
+            content: "•";
+            position: absolute;
+            left: -16px;
+            color: var(--spotify-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">
+            <i class="fas fa-music"></i>
+            <h1>Create Account</h1>
+        </div>
+
+        <form method="post" action="{% url 'register' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <div class="password-requirements">
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>Contains at least one number</li>
+                        <li>Contains at least one special character</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+            </div>
+            <button type="submit" class="register-btn">Create Account</button>
+            {% if error_message %}
+            <div class="error-message show">
+                {{ error_message }}
+            </div>
+            {% endif %}
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Log in</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.querySelector('form');
+        const errorMessage = document.querySelector('.error-message');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+
+        form.addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const passwordValue = password.value;
+            const confirmPasswordValue = confirmPassword.value;
+
+            if (!username || !email || !passwordValue || !confirmPasswordValue) {
+                e.preventDefault();
+                errorMessage.textContent = 'Please fill in all fields';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            if (passwordValue !== confirmPasswordValue) {
+                e.preventDefault();
+                errorMessage.textContent = 'Passwords do not match';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            // Password validation
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            if (!passwordRegex.test(passwordValue)) {
+                e.preventDefault();
+                errorMessage.textContent = 'Password does not meet requirements';
+                errorMessage.classList.add('show');
+                return;
+            }
+        });
+
+        // Clear error message when user starts typing
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', () => {
+                errorMessage.classList.remove('show');
+            });
+        });
+
+        // Real-time password matching validation
+        confirmPassword.addEventListener('input', function() {
+            if (this.value !== password.value) {
+                this.style.borderColor = '#ff4444';
+            } else {
+                this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }
+        });
+    </script>
+</body>
+</html> 

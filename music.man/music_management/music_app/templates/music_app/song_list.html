@@ -1,0 +1,479 @@
+{% extends 'music_app/base.html' %}
+
+{% block title %}Songs - Music Player{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #181818;
+    }
+    .spotify-list {
+        max-width: 800px;
+        margin: 2rem auto 8rem auto;
+        background: #232323;
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        padding: 2rem;
+    }
+    .playlist-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .playlist-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+    }
+    .song-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+    .song-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .song-cover {
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .song-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .song-meta {
+        flex: 1;
+        min-width: 0;
+    }
+    .song-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #fff;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .song-artist {
+        font-size: 0.875rem;
+        color: #b3b3b3;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .song-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .play-btn {
+        background: #1db954;
+        color: #000;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .play-btn:hover {
+        transform: scale(1.05);
+        background: #1ed760;
+    }
+    .play-btn i {
+        font-size: 1rem;
+    }
+    .favorite-btn {
+        background: none;
+        border: none;
+        color: #b3b3b3;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 50%;
+    }
+    .favorite-btn:hover {
+        color: #1db954;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .favorite-btn.active {
+        color: #1db954;
+    }
+    .now-playing-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #181818;
+        padding: 1rem;
+        border-top: 1px solid #282828;
+    }
+    .now-playing-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        align-items: center;
+        gap: 1rem;
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+    .now-playing-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .now-playing-cover {
+        width: 56px;
+        height: 56px;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #282828;
+    }
+    .now-playing-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #282828;
+        color: #b3b3b3;
+    }
+    .image-placeholder i {
+        font-size: 1.5rem;
+    }
+    .now-playing-meta {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .now-playing-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #fff;
+        margin: 0;
+    }
+    .now-playing-artist {
+        font-size: 0.8rem;
+        color: #b3b3b3;
+        margin: 0;
+    }
+    .playback-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .control-buttons {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .control-button {
+        background: none;
+        border: none;
+        color: #b3b3b3;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 0.5rem;
+        border-radius: 50%;
+    }
+    .control-button:hover {
+        color: #fff;
+        transform: scale(1.1);
+    }
+    .control-button.primary {
+        background: #fff;
+        color: #000;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .control-button.primary:hover {
+        transform: scale(1.1);
+        background: #fff;
+    }
+    .progress-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #b3b3b3;
+        font-size: 0.8rem;
+    }
+    .progress-slider {
+        flex: 1;
+        -webkit-appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: #535353;
+        outline: none;
+        cursor: pointer;
+    }
+    .progress-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .progress-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+    }
+    .volume-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    .volume-slider {
+        width: 100px;
+        -webkit-appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: #535353;
+        outline: none;
+        cursor: pointer;
+    }
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .volume-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="spotify-list">
+    <div class="playlist-header">
+        <h1 class="playlist-title">Your Music Library</h1>
+    </div>
+    {% if songs %}
+        {% for song in songs %}
+        <div class="song-row" onclick="window.location.href='{% url 'song_detail' song.id %}'">
+            <div class="song-cover">
+                {% if song.cover_image %}
+                    <img src="{{ song.cover_image.url }}" 
+                         alt="{{ song.title }}"
+                         onerror="this.parentElement.innerHTML = '<div class=\'image-placeholder\'><i class=\'fas fa-music\'></i></div>'">
+                {% else %}
+                    <div class="image-placeholder">
+                        <i class="fas fa-music"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="song-meta">
+                <h3 class="song-title">{{ song.title }}</h3>
+                <p class="song-artist">{{ song.artist }}</p>
+            </div>
+            <div class="song-actions">
+                {% if song.audio_file %}
+                <button class="play-btn" 
+                        title="Play" 
+                        data-song-url="{{ song.audio_file.url }}"
+                        onclick="event.stopPropagation(); playSong('{{ song.audio_file.url }}', '{{ song.title }}', '{{ song.artist }}', '{% if song.cover_image %}{{ song.cover_image.url }}{% endif %}')">
+                    <i class="fas fa-play"></i>
+                </button>
+                {% else %}
+                <button class="play-btn" disabled title="No audio available" style="opacity: 0.5; cursor: not-allowed;">
+                    <i class="fas fa-play"></i>
+                </button>
+                {% endif %}
+                
+                <form method="post" action="{% url 'toggle_favorite' song.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="favorite-btn {% if song in user.favorites.all %}active{% endif %}"
+                            onclick="event.stopPropagation()"
+                            title="{% if song in user.favorites.all %}Remove from favorites{% else %}Add to favorites{% endif %}">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-songs">
+            <i class="fas fa-music"></i>
+            <h2>No songs found</h2>
+            <p>Add some songs to your library to get started.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="now-playing-bar">
+    <div class="now-playing-grid">
+        <div class="now-playing-info">
+            <div class="now-playing-cover">
+                <img src="" alt="Now Playing">
+            </div>
+            <div class="now-playing-meta">
+                <h4 class="now-playing-title"></h4>
+                <p class="now-playing-artist"></p>
+            </div>
+        </div>
+
+        <div class="playback-controls">
+            <div class="control-buttons">
+                <button class="control-button" onclick="previousSong()" title="Previous">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button class="control-button" onclick="seekBackward()" title="Seek Backward">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="control-button primary" onclick="togglePlayPause()" title="Play/Pause">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="control-button" onclick="seekForward()" title="Seek Forward">
+                    <i class="fas fa-forward"></i>
+                </button>
+                <button class="control-button" onclick="nextSong()" title="Next">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+            </div>
+            <div class="progress-bar">
+                <span id="currentTime">0:00</span>
+                <input type="range" class="progress-slider" min="0" max="100" value="0" id="progressBar">
+                <span id="duration">0:00</span>
+            </div>
+        </div>
+
+        <div class="volume-controls">
+            <button class="control-button" onclick="toggleMute()" title="Mute">
+                <i class="fas fa-volume-up" id="volumeIcon"></i>
+            </button>
+            <input type="range" class="volume-slider" min="0" max="100" value="100" id="volumeControl">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle favorite button clicks
+    document.querySelectorAll('.favorite-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+
+    // Audio control variables
+    const progressBar = document.getElementById('progressBar');
+    const volumeControl = document.getElementById('volumeControl');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const currentTimeDisplay = document.getElementById('currentTime');
+    const durationDisplay = document.getElementById('duration');
+    let lastVolume = 1;
+
+    // Format time in minutes:seconds
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        seconds = Math.floor(seconds % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Update progress bar and time displays
+    audioPlayer.addEventListener('timeupdate', () => {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.value = progress;
+        currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+    });
+
+    // Update duration when metadata is loaded
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        durationDisplay.textContent = formatTime(audioPlayer.duration);
+    });
+
+    // Handle progress bar change
+    progressBar.addEventListener('input', () => {
+        const time = (progressBar.value / 100) * audioPlayer.duration;
+        audioPlayer.currentTime = time;
+    });
+
+    // Handle volume control
+    volumeControl.addEventListener('input', () => {
+        const volume = volumeControl.value / 100;
+        audioPlayer.volume = volume;
+        updateVolumeIcon(volume);
+        if (volume > 0) lastVolume = volume;
+    });
+
+    // Toggle mute
+    function toggleMute() {
+        if (audioPlayer.volume > 0) {
+            audioPlayer.volume = 0;
+            volumeControl.value = 0;
+        } else {
+            audioPlayer.volume = lastVolume;
+            volumeControl.value = lastVolume * 100;
+        }
+        updateVolumeIcon(audioPlayer.volume);
+    }
+
+    // Update volume icon based on volume level
+    function updateVolumeIcon(volume) {
+        if (volume === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (volume < 0.5) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
+    }
+
+    // Seek forward/backward by 10 seconds
+    function seekForward() {
+        audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration);
+    }
+
+    function seekBackward() {
+        audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0);
+    }
+
+    // Previous/Next song functionality (to be implemented with playlist)
+    function previousSong() {
+        // Implement previous song logic
+        console.log('Previous song');
+    }
+
+    function nextSong() {
+        // Implement next song logic
+        console.log('Next song');
+    }
+</script>
+{% endblock %}

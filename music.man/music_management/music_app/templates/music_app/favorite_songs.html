@@ -1,0 +1,254 @@
+{% extends 'music_app/base.html' %}
+
+{% block title %}Favorites - Music Player{% endblock %}
+
+{% block extra_css %}
+<style>
+    .favorites-header {
+        margin-bottom: 2rem;
+    }
+
+    .favorites-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--spotify-white);
+        margin-bottom: 0.5rem;
+    }
+
+    .favorites-header p {
+        color: var(--spotify-light-gray);
+    }
+
+    .songs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 2rem;
+    }
+
+    .song-card {
+        background: var(--spotify-dark-gray);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .song-card:hover {
+        transform: translateY(-4px);
+        background: #333;
+    }
+
+    .song-cover {
+        width: 100%;
+        aspect-ratio: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .song-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .song-cover .play-button {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        background: var(--spotify-green);
+        color: var(--spotify-black);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .song-card:hover .play-button {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .play-button:hover {
+        transform: scale(1.1);
+        background: #1ed760;
+    }
+
+    .song-info {
+        padding: 1rem;
+    }
+
+    .song-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--spotify-white);
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .song-artist {
+        font-size: 0.875rem;
+        color: var(--spotify-light-gray);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .favorite-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        color: var(--spotify-green);
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        opacity: 0;
+    }
+
+    .song-card:hover .favorite-button {
+        opacity: 1;
+    }
+
+    .favorite-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #1ed760;
+    }
+
+    .no-favorites {
+        text-align: center;
+        padding: 3rem;
+        color: var(--spotify-light-gray);
+    }
+
+    .no-favorites i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--spotify-green);
+    }
+
+    .image-placeholder {
+        background: var(--spotify-dark-gray);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-error {
+        color: var(--spotify-light-gray);
+        font-size: 2rem;
+    }
+
+    .now-playing-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .now-playing-cover img.hidden {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .songs-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .song-title {
+            font-size: 0.875rem;
+        }
+
+        .song-artist {
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="favorites-header">
+    <h1>Your Favorites</h1>
+    <p>All your favorite songs in one place</p>
+</div>
+
+{% if favorites %}
+    <div class="songs-grid">
+        {% for favorite in favorites %}
+            <div class="song-card">
+                <a href="{% url 'song_detail' favorite.song.id %}" class="song-cover">
+                    {% if favorite.song.cover_image %}
+                        <img src="{{ favorite.song.cover_image.url }}" 
+                             alt="{{ favorite.song.title }} cover"
+                             onload="handleImageLoad(this)">
+                    {% else %}
+                        <div class="image-placeholder">
+                            <i class="fas fa-music image-error"></i>
+                        </div>
+                    {% endif %}
+                    
+                    {% if favorite.song.audio_file %}
+                    <button class="play-button" 
+                            title="Play" 
+                            data-song-url="{{ favorite.song.audio_file.url }}"
+                            onclick="event.preventDefault(); event.stopPropagation(); playSong('{{ favorite.song.audio_file.url }}', '{{ favorite.song.title }}', '{{ favorite.song.artist }}', '{% if favorite.song.cover_image %}{{ favorite.song.cover_image.url }}{% endif %}')">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    {% else %}
+                    <button class="play-button" disabled title="No audio available" style="opacity: 0.5; cursor: not-allowed;">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    {% endif %}
+                </a>
+                <div class="song-info">
+                    <h3 class="song-title">{{ favorite.song.title }}</h3>
+                    <p class="song-artist">{{ favorite.song.artist }}</p>
+                </div>
+                <form method="post" action="{% url 'toggle_favorite' favorite.song.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="favorite-button active" title="Remove from favorites">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="no-favorites">
+        <i class="fas fa-heart"></i>
+        <h2>No favorites yet</h2>
+        <p>Add some songs to your favorites to see them here.</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const favoriteButtons = document.querySelectorAll('.favorite-button');
+    
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.closest('form').submit();
+        });
+    });
+</script>
+{% endblock %}
